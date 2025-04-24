@@ -1,396 +1,413 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>History Quiz</title>
-  <style>
-    body { font-family: sans-serif; padding: 20px; }
-    .hidden { display: none; }
-    #questionBox { margin: 20px 0; }
-    #eventList { white-space: pre-wrap; margin-top: 20px; }
-    #feedback { margin-top: 10px; color: green; font-weight: bold; }
-	@keyframes blinkRed {
-	  0%, 100% { background-color: lightgray; }
-	  50% { background-color: red; }
-	}
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>History Quiz</title>
+		<style>
+			@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
 
-	.blink {
-	  animation: blinkRed 0.4s ease 2;
-	}
-	
-	div#timerBox {
-		padding: 4px;
-		background-color: lightgray;
-		display: inline;
-		font-family: monospace;
-	}
+			body {
+				font-family: Roboto, sans-serif;
+				padding: 20px;
+			}
 
-  </style>
-</head>
-<body>
-  <h1>APWH Date Quiz</h1>
-  <p>wdym i have to pay 3 dollars a month for quizlet</p>
+			.hidden {
+				display: none;
+			}
 
-  <!-- Time Period Selector -->
-  <label for="periodSelect">Select Time Period:</label>
-  <select id="periodSelect">
-    <option value="600-1750">4/25/25 - 600-1750</option>
-    <option value="1750-1900">4/30/25 - 1750-1900</option>
-    <option value="1900-2001">5/6/25 - 1900-2001</option>
-  </select>
+			#questionBox {
+				margin: 20px 0;
+			}
 
-  <div>
-    <label for="modeSelect">Select Mode:</label>
-    <select id="modeSelect">
-      <option value="date">Guess Event (Based on Date)</option>
-      <option value="event">Guess Date (Based on Event)</option>
-      <option value="both" selected>Both (Random)</option>
-    </select>
-  </div>
+			#eventList {
+				white-space: pre-wrap;
+				margin-top: 20px;
+			}
 
-  <div id="questionBox">
-    <p><strong>Question:</strong> <span id="question"></span></p>
-	<div id="timerBox">00.000</div>
-    <input type="text" id="answerInput" placeholder="Your answer here" disabled>
-    <button onclick="checkAnswer()" id="checkButton" disabled>Check Answer</button>
-    <button onclick="nextQuestion()" id="nextButton" class="hidden">Next Question</button>
-    <p id="feedback"></p>
-    <p>Attempts: <span id="attempts">0</span> / 5</p>
-    <p>Progress: <span id="progress">0 / 20</span></p>
-  </div>
+			#feedback {
+				margin-top: 10px;
+				color: green;
+				font-weight: bold;
+			}
 
-  <button onclick="toggleList()">Toggle Full Event List</button>
-  <div id="eventList" class="hidden"></div>
+			@keyframes blinkRed {
 
-  <button onclick="resetQuiz()">Reset Quiz</button>
+				0%,
+				100% {
+					background-color: lightgray;
+				}
 
-  <script>
-    const data = {
-      "600-1750": [
-        ["622", "Founding of Islam"],
-        ["730", "Printing invented in China"],
-        ["1206", "Genghis Khan begins Mongol conquests"],
-        ["1271-1295", "Marco Polo’s travels"],
-        ["1279-1368", "Yuan (Mongol) Dynasty in China"],
-        ["1324", "Mansa Musa’s pilgrimage"],
-        ["1325-1349", "Travels of Ibn Battuta"],
-        ["1347-1348", "Bubonic plague in Europe"],
-        ["1368-1644", "Ming Dynasty"],
-        ["1405-1433", "Zheng He’s 7 voyages"],
-        ["1453", "Ottomans capture Constantinople"],
-        ["1450s", "Printing Press in Europe (Gutenberg)"],
-        ["1488", "Dias rounds Cape of Good Hope"],
-        ["1502", "1st African Slaves to Americas"],
-        ["1517", "Martin Luther/Protestant Reformation"],
-        ["1519-1521", "Cortez conquered the Aztecs"],
-        ["1588", "Spanish Armada defeated by Queen Elizabeth of England"],
-        ["1600", "Beginning of Tokugawa Shogunate"],
-        ["1644-1911", "Qing Dynasty"],
-        ["1653", "Cape Town colony founded (Dutch)"]
-      ],
-      "1750-1900": [
-        ["1756-1763", "7 Years War (French and Indian War)"],
-        ["1776", "Adam Smith’s Wealth of Nations"],
-        ["1789", "French Revolution begins"],
-        ["1804", "Haitian independence"],
-        ["1807", "British abolish Trans-Atlantic slave trade"],
-        ["1815", "Congress of Vienna"],
-        ["1820s", "Independence in Latin America"],
-        ["1839", "1st Opium War in China"],
-        ["1839-1878", "Tanzimat Reforms"],
-        ["1853", "Commodore Perry opens Japan"],
-        ["1857", "Sepoy Mutiny"],
-        ["1861", "Russian serfdom ends"],
-        ["1861-1870", "Italian unification"],
-        ["1869", "Suez Canal Opens"],
-        ["1871", "German unification"],
-        ["1885", "Berlin Conference"],
-        ["1888", "Brazil ends slavery"],
-        ["1896", "Ethiopians defeat Italians at Adowa"],
-        ["1898", "Spanish-American War"],
-        ["1899-1902", "Boer War"]
-      ],
-      "1900-2001": [
-        ["1910-1920", "Mexican Revolution"],
-        ["1911", "Chinese Revolution"],
-        ["1914-1918", "World War I"],
-        ["1917", "Russian Revolution"],
-        ["1919", "Treaty of Versailles"],
-        ["1929", "Stock Market Crash"],
-        ["1939", "German blitzkrieg in Poland"],
-        ["1941", "Pearl Harbor"],
-        ["1945", "End of WWII"],
-        ["1947", "Truman Doctrine"],
-        ["1947", "India independence/partition"],
-        ["1948", "Birth of Israel"],
-        ["1949", "NATO founded"],
-        ["1949", "Chinese Communist Revolution"],
-        ["1950-1953", "Korean War"],
-        ["1956", "Suez Canal Crisis"],
-        ["1959", "Cuban Revolution"],
-        ["1961-1989", "Berlin Wall"],
-        ["1979", "Iranian Revolution"],
-        ["1991", "Persian Gulf War"]
-      ]
-    };
+				50% {
+					background-color: red;
+				}
+			}
 
-    let currentPeriod = "600-1750";
-    let currentQuestionIndex = 0;
-    let attempts = 0;
-    let score = 0;
-    let mode = "both";
-    let currentQuestions = [];
-	let timerInterval = null;
-	
-	function startTimer(durationMs) {
-	  const el = document.getElementById("timerBox");
-	  const start = Date.now();
-	  const end = start + durationMs;
+			.blink {
+				animation: blinkRed 0.4s ease 2;
+			}
 
-	  timerInterval = setInterval(() => {
-		const now = Date.now();
-		const remaining = end - now;
-
-		if (remaining <= 0) {
-		  clearInterval(timerInterval);
-		  el.textContent = "00.000";
-		  el.classList.add("blink");
-		  setTimeout(() => el.classList.remove("blink"), 500);
-		  return;
-		}
-
-		const seconds = Math.floor(remaining / 1000);
-		const milliseconds = remaining % 1000;
-
-		el.textContent = `${String(seconds).padStart(2, '0')}.${String(milliseconds).padStart(3, '0')}`;
-	  }, 16); // ~60fps
-	}
-	
-	function stopTimer() {
-	  clearInterval(timerInterval);
-	  const el = document.getElementById("timerBox");
-	  el.textContent = "Stopped";
-	}
-
-
-    // Normalize input for comparison
-    function normalize(str) {
-      if (str && typeof str === 'string') {
-        return str.toLowerCase().replace(/\s+/g, '').replace(/[^\w\-]/g, '');
+			div#timerBox {
+				padding: 4px;
+				background-color: lightgray;
+				display: inline;
+				font-family: monospace;
+			}
+      
+      img#yes {
+        position: fixed;
+        right: 16px;
+        bottom: 16px;
+        height: 256px;
+        display: none;
       }
-      return '';  // Return empty string if the input is not valid
-    }
+		</style>
+	</head>
+	<body>
+		<h1>APWH Date Quiz</h1>
+		<p>wdym i have to pay 3 dollars a month for quizlet... well i guess you don't get block blast</p>
+		<!-- Time Period Selector -->
+		<label for="periodSelect">Select Time Period:</label>
+		<select id="periodSelect">
+			<option value="600-1750">4/25/25 - 600-1750</option>
+			<option value="1750-1900">4/30/25 - 1750-1900</option>
+			<option value="1900-2001">5/6/25 - 1900-2001</option>
+		</select>
+		<div>
+			<label for="modeSelect">Select Mode:</label>
+			<select id="modeSelect">
+				<option value="date">Guess Event (Based on Date)</option>
+				<option value="event">Guess Date (Based on Event)</option>
+				<option value="both" selected>Both (Random)</option>
+			</select>
+		</div>
+		<div id="questionBox">
+			<p>
+				<strong>Question:</strong>
+				<span id="question"></span>
+			</p>
+			<div id="timerBox">00.000</div>
+			<input type="text" id="answerInput" placeholder="Your answer here" disabled>
+			<button onclick="checkAnswer()" id="checkButton" disabled>Check Answer</button>
+			<button onclick="nextQuestion()" id="nextButton" class="hidden">Next Question</button>
+			<p id="feedback"></p>
+			<p>Attempts: <span id="attempts">0</span> / 5 </p>
+			<p>Progress: <span id="progress">0 / 20</span>
+			</p>
+		</div>
+    <button onclick="toggleTimer()">Toggle Timer</button>
+    <button onclick="subwaySurfers()">Special "Accomodations"</button>
+    <button onclick="resetQuiz()">Reset Quiz</button>
+		<button onclick="toggleList()">Toggle Full Event List</button>
+		<div id="eventList" class="hidden"></div>
+    <img src="https://www.icegif.com/wp-content/uploads/2024/09/subway-surfers-icegif-5.gif" id="yes">
+		<script>
+			const data = {
+				"600-1750": [
+					["622", "Founding of Islam"],
+					["730", "Printing invented in China"],
+					["1206", "Genghis Khan begins Mongol conquests"],
+					["1271-1295", "Marco Polo’s travels"],
+					["1279-1368", "Yuan (Mongol) Dynasty in China"],
+					["1324", "Mansa Musa’s pilgrimage"],
+					["1325-1349", "Travels of Ibn Battuta"],
+					["1347-1348", "Bubonic plague in Europe"],
+					["1368-1644", "Ming Dynasty"],
+					["1405-1433", "Zheng He’s 7 voyages"],
+					["1453", "Ottomans capture Constantinople"],
+					["1450s", "Printing Press in Europe (Gutenberg)"],
+					["1488", "Dias rounds Cape of Good Hope"],
+					["1502", "1st African Slaves to Americas"],
+					["1517", "Martin Luther/Protestant Reformation"],
+					["1519-1521", "Cortez conquered the Aztecs"],
+					["1588", "Spanish Armada defeated by Queen Elizabeth of England"],
+					["1600", "Beginning of Tokugawa Shogunate"],
+					["1644-1911", "Qing Dynasty"],
+					["1653", "Cape Town colony founded (Dutch)"]
+				],
+				"1750-1900": [
+					["1756-1763", "7 Years War (French and Indian War)"],
+					["1776", "Adam Smith’s Wealth of Nations"],
+					["1789", "French Revolution begins"],
+					["1804", "Haitian independence"],
+					["1807", "British abolish Trans-Atlantic slave trade"],
+					["1815", "Congress of Vienna"],
+					["1820s", "Independence in Latin America"],
+					["1839", "1st Opium War in China"],
+					["1839-1878", "Tanzimat Reforms"],
+					["1853", "Commodore Perry opens Japan"],
+					["1857", "Sepoy Mutiny"],
+					["1861", "Russian serfdom ends"],
+					["1861-1870", "Italian unification"],
+					["1869", "Suez Canal Opens"],
+					["1871", "German unification"],
+					["1885", "Berlin Conference"],
+					["1888", "Brazil ends slavery"],
+					["1896", "Ethiopians defeat Italians at Adowa"],
+					["1898", "Spanish-American War"],
+					["1899-1902", "Boer War"]
+				],
+				"1900-2001": [
+					["1910-1920", "Mexican Revolution"],
+					["1911", "Chinese Revolution"],
+					["1914-1918", "World War I"],
+					["1917", "Russian Revolution"],
+					["1919", "Treaty of Versailles"],
+					["1929", "Stock Market Crash"],
+					["1939", "German blitzkrieg in Poland"],
+					["1941", "Pearl Harbor"],
+					["1945", "End of WWII"],
+					["1947", "Truman Doctrine"],
+					["1947", "India independence/partition"],
+					["1948", "Birth of Israel"],
+					["1949", "NATO founded"],
+					["1949", "Chinese Communist Revolution"],
+					["1950-1953", "Korean War"],
+					["1956", "Suez Canal Crisis"],
+					["1959", "Cuban Revolution"],
+					["1961-1989", "Berlin Wall"],
+					["1979", "Iranian Revolution"],
+					["1991", "Persian Gulf War"]
+				]
+			};
+			let currentPeriod = "600-1750";
+			let currentQuestionIndex = 0;
+			let attempts = 0;
+			let score = 0;
+			let mode = "both";
+			let currentQuestions = [];
+			let timerInterval = null;
 
-    // Function to normalize a single word (lowercase, remove punctuation, and handle number-to-word mapping)
-	function normalizeWord(word) {
-	  // Map numbers to their word equivalents (e.g., "7" to "seven")
-	  const numberMapping = {
-		"1": "one",
-		"2": "two",
-		"3": "three",
-		"4": "four",
-		"5": "five",
-		"6": "six",
-		"7": "seven",
-		"8": "eight",
-		"9": "nine",
-		"10": "ten"
-	  };
+			function startTimer(durationMs) {
+				const el = document.getElementById("timerBox");
+				const start = Date.now();
+				const end = start + durationMs;
+				timerInterval = setInterval(() => {
+					const now = Date.now();
+					const remaining = end - now;
+					if (remaining <= 0) {
+						clearInterval(timerInterval);
+						el.textContent = "00.000";
+						el.classList.add("blink");
+						setTimeout(() => el.classList.remove("blink"), 500);
+						return;
+					}
+					const seconds = Math.floor(remaining / 1000);
+					const milliseconds = remaining % 1000;
+					el.textContent = `${String(seconds).padStart(2, '0')}.${String(milliseconds).padStart(3, '0')}`;
+				}, 16); // ~60fps
+			}
 
-	  // Normalize the word (lowercase and remove non-alphanumeric characters)
-	  word = word.replace(/[^\w\s]|_/g, "").toLowerCase();
-	  
-	  // If the word is a number, map it to its word equivalent
-	  if (numberMapping[word]) {
-		word = numberMapping[word];
-	  }
-	  
-	  return word;
-	}
+			function stopTimer() {
+				clearInterval(timerInterval);
+				const el = document.getElementById("timerBox");
+				el.textContent = "Stopped";
+			}
+			// Normalize input for comparison
+			function normalize(str) {
+				if (str && typeof str === 'string') {
+					return str.toLowerCase().replace(/\s+/g, '').replace(/[^\w\-]/g, '');
+				}
+				return ''; // Return empty string if the input is not valid
+			}
+			// Function to normalize a single word (lowercase, remove punctuation, and handle number-to-word mapping)
+			function normalizeWord(word) {
+				// Map numbers to their word equivalents (e.g., "7" to "seven")
+				const numberMapping = {
+					"1": "one",
+					"2": "two",
+					"3": "three",
+					"4": "four",
+					"5": "five",
+					"6": "six",
+					"7": "seven",
+					"8": "eight",
+					"9": "nine",
+					"10": "ten"
+				};
+				// Normalize the word (lowercase and remove non-alphanumeric characters)
+				word = word.replace(/[^\w\s]|_/g, "").toLowerCase();
+				// If the word is a number, map it to its word equivalent
+				if (numberMapping[word]) {
+					word = numberMapping[word];
+				}
+				return word;
+			}
+			// Flexible event matching (partial match)
+			function matchEvent(input, event) {
+				// Split both the event and the input into individual words
+				const eventWords = event.split(/\s+/); // Split by spaces
+				const inputWords = input.split(/\s+/); // Split by spaces
+				// Normalize each word
+				const normalizedEventWords = eventWords.map(word => normalizeWord(word));
+				const normalizedInputWords = inputWords.map(word => normalizeWord(word));
+				// Count how many words in the event appear in the input
+				let matchCount = 0;
+				// For each word in the event, check if it appears in the input
+				normalizedEventWords.forEach(eventWord => {
+					normalizedInputWords.forEach(inputWord => {
+						if (inputWord.includes(eventWord)) { // Match partial word
+							matchCount++;
+						}
+					});
+				});
+				// Return true if at least half of the words in the event are found in the input
+				return (normalizedEventWords.length <= 2) ? (matchCount == normalizedEventWords.length) : (matchCount >= Math.ceil(normalizedEventWords.length / 2));
+			}
+			// Generate random question
+			const questionList = [];
 
-	// Flexible event matching (partial match)
-	function matchEvent(input, event) {
-	  // Split both the event and the input into individual words
-	  const eventWords = event.split(/\s+/); // Split by spaces
-	  const inputWords = input.split(/\s+/); // Split by spaces
-	  
-	  // Normalize each word
-	  const normalizedEventWords = eventWords.map(word => normalizeWord(word));
-	  const normalizedInputWords = inputWords.map(word => normalizeWord(word));
-
-	  // Count how many words in the event appear in the input
-	  let matchCount = 0;
-
-	  // For each word in the event, check if it appears in the input
-	  normalizedEventWords.forEach(eventWord => {
-		normalizedInputWords.forEach(inputWord => {
-		  if (inputWord.includes(eventWord)) { // Match partial word
-			matchCount++;
-		  }
-		});
-	  });
-
-	  // Return true if at least half of the words in the event are found in the input
-	  return (normalizedEventWords.length <= 2) ? (matchCount == normalizedEventWords.length) : (matchCount >= Math.ceil(normalizedEventWords.length / 2));
-	}
-
-
-
-    // Generate random question
-	const questionList = [];
-    function getNextQuestion() {
-      currentQuestions = [...data[currentPeriod]]; // Keep order the same
-	  
-	  if (questionList.length == 20) {
-		  questionList.splice(0, questionList.length);
-	  }
-      do {
-		  currentQuestionIndex = Math.floor(Math.random() * currentQuestions.length);
-		  console.log(currentQuestionIndex,questionList);
-	  } while (questionList.includes(currentQuestionIndex))
-	  questionList.push(currentQuestionIndex);
-      const [date, event] = currentQuestions[currentQuestionIndex];
-
-      return { date, event };
-    }
-
-    // Show next question
-    function showQuestion() {
-      const { date, event } = getNextQuestion();
-      const questionType = mode === "event" || (mode === "both" && Math.random() < 0.5) ? "date" : "event";
-
-      if (questionType === "date") {
-        document.getElementById("question").innerText = event; // Show event to guess date
-      } else {
-        document.getElementById("question").innerText = date; // Show date to guess event
+			function getNextQuestion() {
+				currentQuestions = [...data[currentPeriod]]; // Keep order the same
+				if (questionList.length == 20) {
+					questionList.splice(0, questionList.length);
+				}
+				do {
+					currentQuestionIndex = Math.floor(Math.random() * currentQuestions.length);
+					console.log(currentQuestionIndex, questionList);
+				} while (questionList.includes(currentQuestionIndex))
+				questionList.push(currentQuestionIndex);
+				const [date, event] = currentQuestions[currentQuestionIndex];
+				return {
+					date,
+					event
+				};
+			}
+			// Show next question
+			function showQuestion() {
+				const {
+					date,
+					event
+				} = getNextQuestion();
+				const questionType = mode === "event" || (mode === "both" && Math.random() < 0.5) ? "date" : "event";
+				if (questionType === "date") {
+					document.getElementById("question").innerText = event; // Show event to guess date
+				} else {
+					document.getElementById("question").innerText = date; // Show date to guess event
+				}
+				document.getElementById("answerInput").value = '';
+				document.getElementById("feedback").innerText = '';
+				document.getElementById("attempts").innerText = attempts = 0;
+				document.getElementById("nextButton").classList.add("hidden");
+				document.getElementById("checkButton").disabled = false; // Enable check button
+				document.getElementById("answerInput").disabled = false; // Enable input
+				stopTimer();
+				switch (mode) {
+					case "event":
+						startTimer(5000);
+						break;
+					case "date":
+						startTimer(10000);
+						break;
+					case "both":
+						startTimer(10000);
+						break;
+				}
+			}
+			// Check the answer
+			function checkAnswer() {
+				const userInput = document.getElementById("answerInput").value.trim();
+				const [date, event] = currentQuestions[currentQuestionIndex];
+				const questionType = document.getElementById("question").innerText === event ? "date" : "event";
+				if (userInput === "") {
+					document.getElementById("feedback").innerText = "Answer cannot be blank.";
+					return;
+				}
+				attempts++;
+				document.getElementById("attempts").innerText = attempts;
+				if (questionType === "date") {
+					if (normalize(userInput) === normalize(date)) {
+						correctAnswer(date, event);
+					} else if (attempts >= 5) {
+						revealAnswer(date, event);
+					} else {
+						document.getElementById("feedback").innerText = "Incorrect, try again!";
+					}
+				} else {
+					if (matchEvent(userInput, event)) {
+						correctAnswer(date, event);
+					} else if (attempts >= 5) {
+						revealAnswer(date, event);
+					} else {
+						document.getElementById("feedback").innerText = "Incorrect, try again!";
+					}
+				}
+			}
+			// Correct answer function
+			function correctAnswer(date, event) {
+				document.getElementById("feedback").innerText = `Correct! ${event} in ${date}`;
+				score++;
+				document.getElementById("progress").innerText = `${score} / ${currentQuestions.length}`;
+				document.getElementById("nextButton").classList.remove("hidden");
+				document.getElementById("checkButton").disabled = true; // Disable button after correct answer
+				document.getElementById("answerInput").disabled = false; // Disable input after correct answer
+			}
+			// Reveal the answer after 5 attempts
+			function revealAnswer(date, event) {
+				document.getElementById("feedback").innerText = `Answer: ${date} - ${event}`;
+				document.getElementById("nextButton").classList.remove("hidden");
+			}
+			// Moving to the next question
+			function nextQuestion() {
+				attempts = 0; // Reset attempts
+				showQuestion();
+			}
+			// Toggle Full Event List visibility
+			function toggleList() {
+				const list = document.getElementById("eventList");
+				if (list.classList.contains("hidden")) {
+					list.classList.remove("hidden");
+					list.innerText = currentQuestions.map(([date, event]) => `${date} - ${event}`).join('\n');
+				} else {
+					list.classList.add("hidden");
+					list.innerText = '';
+				}
+			}
+			// Event listener for period change
+			document.getElementById("periodSelect").addEventListener("change", function() {
+				currentPeriod = this.value;
+        resetQuiz();
+				showQuestion();
+			});
+			// Event listener for mode change
+			document.getElementById("modeSelect").addEventListener("change", function() {
+				mode = this.value;
+        resetQuiz();
+				showQuestion();
+			});
+			document.getElementById("answerInput").addEventListener("keydown", function(e) {
+				if (e.key === "Enter") {
+					e.preventDefault();
+					if (document.getElementById("nextButton").classList.contains("hidden")) {
+						checkAnswer();
+					} else {
+						nextQuestion();
+					}
+				}
+			});
+			// Reset the quiz
+			function resetQuiz() {
+				score = 0;
+				attempts = 0;
+        questionList.splice(0,questionList.length);
+				document.getElementById("progress").innerText = `${score} / ${currentQuestions.length}`;
+				document.getElementById("attempts").innerText = attempts;
+				document.getElementById("nextButton").classList.add("hidden");
+				showQuestion();
+			}
+      
+      function subwaySurfers() {
+      	document.getElementById("yes").style.display = (document.getElementById("yes").style.display == "") ? ("block") : ("");
       }
-
-      document.getElementById("answerInput").value = '';
-      document.getElementById("feedback").innerText = '';
-      document.getElementById("attempts").innerText = attempts = 0;
-      document.getElementById("nextButton").classList.add("hidden");
-      document.getElementById("checkButton").disabled = false; // Enable check button
-      document.getElementById("answerInput").disabled = false; // Enable input
-	  
-	  stopTimer();
-	  switch(mode) {
-		case "event":
-			startTimer(5000);
-			break;
-		case "date":
-			startTimer(10000);
-			break;
-		case "both":
-			startTimer(10000);
-			break;
-	  }
-    }
-
-    // Check the answer
-    function checkAnswer() {
-      const userInput = document.getElementById("answerInput").value.trim();
-		const [date, event] = currentQuestions[currentQuestionIndex];
-      const questionType = document.getElementById("question").innerText === event ? "date" : "event";
-
-      if (userInput === "") {
-        document.getElementById("feedback").innerText = "Answer cannot be blank.";
-        return;
+      
+      function toggleTimer() {
+      	document.getElementById("timerBox").style.display = (document.getElementById("timerBox").style.display == "") ? ("none") : ("");
       }
-
-      attempts++;
-      document.getElementById("attempts").innerText = attempts;
-
-      if (questionType === "date") {
-        if (normalize(userInput) === normalize(date)) {
-          correctAnswer(date, event);
-        } else if (attempts >= 5) {
-          revealAnswer(date, event);
-        } else {
-          document.getElementById("feedback").innerText = "Incorrect, try again!";
-        }
-      } else {
-        if (matchEvent(userInput, event)) {
-          correctAnswer(date, event);
-        } else if (attempts >= 5) {
-          revealAnswer(date, event);
-        } else {
-          document.getElementById("feedback").innerText = "Incorrect, try again!";
-        }
-      }
-    }
-
-    // Correct answer function
-    function correctAnswer(date, event) {
-      document.getElementById("feedback").innerText = `Correct! ${event} in ${date}`;
-      score++;
-      document.getElementById("progress").innerText = `${score} / ${currentQuestions.length}`;
-      document.getElementById("nextButton").classList.remove("hidden");
-      document.getElementById("checkButton").disabled = true; // Disable button after correct answer
-      document.getElementById("answerInput").disabled = false; // Disable input after correct answer
-    }
-
-    // Reveal the answer after 5 attempts
-    function revealAnswer(date, event) {
-      document.getElementById("feedback").innerText = `Answer: ${date} - ${event}`;
-      document.getElementById("nextButton").classList.remove("hidden");
-    }
-
-    // Moving to the next question
-    function nextQuestion() {
-      attempts = 0;  // Reset attempts
-      showQuestion();
-    }
-
-    // Toggle Full Event List visibility
-    function toggleList() {
-      const list = document.getElementById("eventList");
-      if (list.classList.contains("hidden")) {
-        list.classList.remove("hidden");
-        list.innerText = currentQuestions.map(([date, event]) => `${date} - ${event}`).join('\n');
-      } else {
-        list.classList.add("hidden");
-        list.innerText = '';
-      }
-    }
-
-    // Event listener for period change
-    document.getElementById("periodSelect").addEventListener("change", function () {
-      currentPeriod = this.value;
-      showQuestion();
-    });
-
-    // Event listener for mode change
-    document.getElementById("modeSelect").addEventListener("change", function () {
-      mode = this.value;
-      showQuestion();
-    });
-
-    document.getElementById("answerInput").addEventListener("keydown", function(e) {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        if (document.getElementById("nextButton").classList.contains("hidden")) {
-           checkAnswer();
-        } else {
-           nextQuestion();
-        }
-      }
-    });
-
-    // Reset the quiz
-    function resetQuiz() {
-      score = 0;
-      attempts = 0;
-      document.getElementById("progress").innerText = `${score} / ${currentQuestions.length}`;
-      document.getElementById("attempts").innerText = attempts;
-      document.getElementById("nextButton").classList.add("hidden");
-      showQuestion();
-    }
-
-    // Initialize the quiz
-    window.onload = () => {
-      nextQuestion();
-    };
-  </script>
-</body>
+      
+			// Initialize the quiz
+			window.onload = () => {
+				nextQuestion();
+			};
+		</script>
+	</body>
 </html>
